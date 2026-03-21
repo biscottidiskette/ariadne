@@ -131,16 +131,16 @@
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
 | E7-01 | `main.py` — FastAPI app init, CORS, middleware | 🟢 | |
-| E7-02 | `routes/engagements.py` — full CRUD endpoints | 🟡 | next |
-| E7-03 | `routes/artifacts.py` — upload + paste endpoints | ⚪ | |
-| E7-04 | `routes/chat.py` — send message, stream response | ⚪ | SSE streaming |
-| E7-05 | `routes/suggestions.py` — list, update status | ⚪ | |
-| E7-06 | `routes/timeline.py` — list, add, update events | ⚪ | |
-| E7-07 | `routes/playbook.py` — generate, list steps, export | ⚪ | |
-| E7-08 | `routes/sigma.py` — generate rule, list, export | ⚪ | |
-| E7-09 | `routes/iocs.py` — list, add, relationship data | ⚪ | |
-| E7-10 | `routes/notes.py` — append, list | ⚪ | |
-| E7-11 | `routes/graph.py` — artifact relationship graph data | ⚪ | node + edge format for frontend |
+| E7-02 | `routes/engagements.py` — full CRUD endpoints | 🟢 | |
+| E7-03 | `routes/artifacts.py` — upload + paste endpoints | 🟢 | parsers stubbed |
+| E7-04 | `routes/chat.py` — send message, stream response | 🟢 | SSE streaming |
+| E7-05 | `routes/suggestions.py` — list, update status | 🟢 | |
+| E7-06 | `routes/timeline.py` — list, add, update events | ⚪ | post-MVP for now |
+| E7-07 | `routes/playbook.py` — generate, list steps, export | ⚪ | post-MVP for now |
+| E7-08 | `routes/sigma.py` — generate rule, list, export | ⚪ | post-MVP for now |
+| E7-09 | `routes/iocs.py` — list, add, relationship data | 🟢 | |
+| E7-10 | `routes/notes.py` — append, list | 🟢 | |
+| E7-11 | `routes/graph.py` — artifact relationship graph data | ⚪ | post-MVP for now |
 
 ---
 
@@ -218,5 +218,5 @@ E1 (scaffold) → E2 (database) → E3 (schemas) → E4 (AI layer)
 
 ---
 
-*Last updated: backend skeleton complete — server live on :8000*
-*Next: E7-02 — routes/engagements.py*
+*Last updated: backend MVP complete — all core routes live*
+*Next: E8-01 — Frontend app shell, router, SOC theme*
