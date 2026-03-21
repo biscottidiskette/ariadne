@@ -23,9 +23,12 @@ from ai.ai import ai_controller
 from models.schemas import HealthResponse
 from db.db import DB_PATH
 
+from routes.artifacts import router as artifacts_router
 from routes.chat import router as chat_router
 from routes.engagements import router as engagements_router
+from routes.iocs import router as iocs_router
 from routes.notes import router as notes_router
+from routes.suggestions import router as suggestions_router
 
 # ---------------------------------------------------------------------------
 # Lifespan — runs on startup and shutdown
@@ -83,9 +86,12 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # ROUTES
 # ---------------------------------------------------------------------------
-app.include_router(engagements_router, prefix="/api")
-app.include_router(notes_router, prefix="/api")
+app.include_router(artifacts_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+app.include_router(engagements_router, prefix="/api")
+app.include_router(iocs_router, prefix="/api")
+app.include_router(notes_router, prefix="/api")
+app.include_router(suggestions_router, prefix="/api")
 
 # ---------------------------------------------------------------------------
 # HEALTH ENDPOINT
