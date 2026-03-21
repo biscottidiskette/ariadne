@@ -35,50 +35,50 @@
 ## EPIC 2: Database Layer
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
-| E2-01 | `db/db.py` — SQLite connection, pragmas, init | ⚪ | |
-| E2-02 | `db/db.py` — schema: engagements table | ⚪ | |
-| E2-03 | `db/db.py` — schema: artifacts table | ⚪ | |
-| E2-04 | `db/db.py` — schema: messages table | ⚪ | |
-| E2-05 | `db/db.py` — schema: suggestions table | ⚪ | anti-circular engine |
-| E2-06 | `db/db.py` — schema: iocs table | ⚪ | |
-| E2-07 | `db/db.py` — schema: timeline_events table | ⚪ | |
-| E2-08 | `db/db.py` — schema: playbook_steps table | ⚪ | |
-| E2-09 | `db/db.py` — schema: sigma_rules table | ⚪ | |
-| E2-10 | `db/db.py` — schema: notes table | ⚪ | timestamped, freeform |
-| E2-11 | `db/database_service.py` — abstraction controller | ⚪ | swap point for future DBs |
-| E2-12 | DB migration strategy — versioned ALTER scripts | ⚪ | simple, no Alembic for MVP |
+| E2-01 | `db/db.py` — SQLite connection, pragmas, init | 🟢 | |
+| E2-02 | `db/db.py` — schema: engagements table | 🟢 | |
+| E2-03 | `db/db.py` — schema: artifacts table | 🟢 | |
+| E2-04 | `db/db.py` — schema: messages table | 🟢 | |
+| E2-05 | `db/db.py` — schema: suggestions table | 🟢 | anti-circular engine |
+| E2-06 | `db/db.py` — schema: iocs table | 🟢 | |
+| E2-07 | `db/db.py` — schema: timeline_events table | 🟢 | |
+| E2-08 | `db/db.py` — schema: playbook_steps table | 🟢 | |
+| E2-09 | `db/db.py` — schema: sigma_rules table | 🟢 | |
+| E2-10 | `db/db.py` — schema: notes table | 🟢 | |
+| E2-11 | `db/database_service.py` — abstraction controller | 🟢 | |
+| E2-12 | DB migration strategy — versioned ALTER scripts | ⚪ | |
 
 ---
 
 ## EPIC 3: Models & Schemas
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
-| E3-01 | `models/schemas.py` — Engagement models | ⚪ | create, read, update, status |
-| E3-02 | `models/schemas.py` — Artifact models | ⚪ | upload + paste variants |
-| E3-03 | `models/schemas.py` — Message models | ⚪ | chat history |
-| E3-04 | `models/schemas.py` — Suggestion models | ⚪ | with status enum |
-| E3-05 | `models/schemas.py` — IoC models | ⚪ | typed: IP, hash, domain, path, etc. |
-| E3-06 | `models/schemas.py` — Timeline event models | ⚪ | |
-| E3-07 | `models/schemas.py` — Playbook models | ⚪ | |
-| E3-08 | `models/schemas.py` — Sigma rule models | ⚪ | |
-| E3-09 | `models/schemas.py` — Note models | ⚪ | |
+| E3-01 | `models/schemas.py` — Engagement models | 🟢 | |
+| E3-02 | `models/schemas.py` — Artifact models | 🟢 | |
+| E3-03 | `models/schemas.py` — Message models | 🟢 | |
+| E3-04 | `models/schemas.py` — Suggestion models | 🟢 | |
+| E3-05 | `models/schemas.py` — IoC models | 🟢 | |
+| E3-06 | `models/schemas.py` — Timeline event models | 🟢 | |
+| E3-07 | `models/schemas.py` — Playbook models | 🟢 | |
+| E3-08 | `models/schemas.py` — Sigma rule models | 🟢 | |
+| E3-09 | `models/schemas.py` — Note models | 🟢 | |
 
 ---
 
 ## EPIC 4: AI Layer
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
-| E4-01 | `ai/groq.py` — Groq client initialization | ⚪ | loads from .env |
-| E4-02 | `ai/groq.py` — async chat completion | ⚪ | |
-| E4-03 | `ai/groq.py` — streaming response support | ⚪ | for chat UX |
-| E4-04 | `ai/groq.py` — model selection + fallback | ⚪ | llama3-70b default |
-| E4-05 | `ai/groq.py` — token usage tracking | ⚪ | logged per request |
-| E4-06 | `ai/groq.py` — error handling + retry logic | ⚪ | rate limits, timeouts |
-| E4-07 | `ai/ai.py` — LLM controller abstraction | ⚪ | routes to groq.py, swap point |
-| E4-08 | `ai/ai.py` — system prompt builder | ⚪ | injects engagement context |
-| E4-09 | `ai/ai.py` — anti-circular suggestion injector | ⚪ | injects prior suggestions into prompt |
-| E4-10 | `ai/ai.py` — suggestion extractor | ⚪ | parses LLM response for new suggestions |
-| E4-11 | `ai/ai.py` — context window manager | ⚪ | trims history to stay within token limits |
+| E4-01 | `ai/groq.py` — Groq client initialization | 🟢 | |
+| E4-02 | `ai/groq.py` — async chat completion | 🟢 | |
+| E4-03 | `ai/groq.py` — streaming response support | 🟢 | |
+| E4-04 | `ai/groq.py` — model selection + fallback | 🟢 | |
+| E4-05 | `ai/groq.py` — token usage tracking | 🟢 | |
+| E4-06 | `ai/groq.py` — error handling + retry logic | 🟢 | |
+| E4-07 | `ai/ai.py` — LLM controller abstraction | 🟢 | |
+| E4-08 | `ai/ai.py` — system prompt builder | 🟢 | |
+| E4-09 | `ai/ai.py` — anti-circular suggestion injector | 🟢 | |
+| E4-10 | `ai/ai.py` — suggestion extractor | 🟢 | |
+| E4-11 | `ai/ai.py` — context window manager | 🟢 | |
 
 ---
 
@@ -130,8 +130,8 @@
 ## EPIC 7: API Routes
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
-| E7-01 | `main.py` — FastAPI app init, CORS, middleware | ⚪ | |
-| E7-02 | `routes/engagements.py` — full CRUD endpoints | ⚪ | |
+| E7-01 | `main.py` — FastAPI app init, CORS, middleware | 🟢 | |
+| E7-02 | `routes/engagements.py` — full CRUD endpoints | 🟡 | next |
 | E7-03 | `routes/artifacts.py` — upload + paste endpoints | ⚪ | |
 | E7-04 | `routes/chat.py` — send message, stream response | ⚪ | SSE streaming |
 | E7-05 | `routes/suggestions.py` — list, update status | ⚪ | |
@@ -218,5 +218,5 @@ E1 (scaffold) → E2 (database) → E3 (schemas) → E4 (AI layer)
 
 ---
 
-*Last updated: project kickoff*
-*Next: E2-01 — db/db.py*
+*Last updated: backend skeleton complete — server live on :8000*
+*Next: E7-02 — routes/engagements.py*
