@@ -23,6 +23,7 @@ from ai.ai import ai_controller
 from models.schemas import HealthResponse
 from db.db import DB_PATH
 
+from routes.chat import router as chat_router
 from routes.engagements import router as engagements_router
 from routes.notes import router as notes_router
 
@@ -84,6 +85,7 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 app.include_router(engagements_router, prefix="/api")
 app.include_router(notes_router, prefix="/api")
+app.include_router(chat_router, prefix="/api")
 
 # ---------------------------------------------------------------------------
 # HEALTH ENDPOINT
