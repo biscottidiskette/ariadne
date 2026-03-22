@@ -29,6 +29,8 @@ from routes.engagements import router as engagements_router
 from routes.iocs import router as iocs_router
 from routes.notes import router as notes_router
 from routes.suggestions import router as suggestions_router
+from routes.timeline import router as timeline_router
+from routes.playbook import router as playbook_router
 
 # ---------------------------------------------------------------------------
 # Lifespan — runs on startup and shutdown
@@ -92,6 +94,8 @@ app.include_router(engagements_router, prefix="/api")
 app.include_router(iocs_router, prefix="/api")
 app.include_router(notes_router, prefix="/api")
 app.include_router(suggestions_router, prefix="/api")
+app.include_router(timeline_router, prefix="/api")
+app.include_router(playbook_router, prefix="/api")
 
 # ---------------------------------------------------------------------------
 # HEALTH ENDPOINT

@@ -1,12 +1,9 @@
 """
 routes/artifacts.py — Artifact ingestion endpoints.
 
-Artifacts are the evidence. Two ingestion paths:
-  1. File upload  — analyst uploads a file (EVTX, JSON, CSV, etc.)
-  2. Paste        — analyst pastes raw text directly
-
-Both paths run through the parser registry which detects the
-artifact type and normalizes the content for LLM context.
+Both ingestion paths (paste and upload) now run through the
+parser registry which normalizes content and auto-extracts
+IoCs and timeline events on ingest.
 
 URL structure:
   GET  /api/engagements/{id}/artifacts         — list all
@@ -18,15 +15,13 @@ URL structure:
 import json
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from db.database_service import DatabaseService
+from parsers.parser_registry import parse_artifact
 from models.schemas import ArtifactResponse
 
 router = APIRouter(tags=["artifacts"])
 db = DatabaseService()
 
-# Maximum file size: 50MB
-# Large EVTX files can be substantial but we parse+summarize them
-# so the raw content size doesn't directly affect LLM costs
-MAX_FILE_SIZE = 50 * 1024 * 1024
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 
 @router.get(
@@ -37,10 +32,7 @@ async def list_artifacts(engagement_id: int):
     """Return all artifacts for an engagement, newest first."""
     engagement = db.get_engagement(engagement_id)
     if engagement is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Engagement {engagement_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Engagement {engagement_id} not found")
     return db.list_artifacts(engagement_id)
 
 
@@ -52,17 +44,11 @@ async def get_artifact(engagement_id: int, artifact_id: int):
     """Fetch a single artifact by ID."""
     engagement = db.get_engagement(engagement_id)
     if engagement is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Engagement {engagement_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Engagement {engagement_id} not found")
 
     artifact = db.get_artifact(artifact_id)
     if artifact is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Artifact {artifact_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Artifact {artifact_id} not found")
     return artifact
 
 
@@ -79,45 +65,61 @@ async def paste_artifact(
     """
     Ingest a pasted artifact.
 
-    The analyst pastes raw text — log output, EDR alert JSON,
-    SIEM query results, malware strings, etc.
-
-    artifact_type should be one of the ArtifactType enum values.
-    If unsure, use 'paste' and the parser registry will attempt
-    best-effort type detection from the content.
-
-    Why Form() instead of JSON body?
-      File uploads use multipart form data. Keeping paste as Form
-      too means both endpoints have the same content-type on the
-      frontend, simplifying the upload component.
+    Runs through the parser registry to normalize content,
+    then auto-saves any extracted IoCs and timeline events.
     """
     engagement = db.get_engagement(engagement_id)
     if engagement is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Engagement {engagement_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Engagement {engagement_id} not found")
 
     if not content.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="Content cannot be empty"
-        )
+        raise HTTPException(status_code=400, detail="Content cannot be empty")
 
-    # Parser registry will be wired here in Epic 5
-    # For now we store raw content with a placeholder summary
-    # The full parser integration comes when we build parsers/
-    parsed_content = json.dumps({"raw": content, "parsed": False})
-    summary = f"Pasted {artifact_type} artifact — {len(content)} chars. Parser pending."
+    # Parse through registry
+    parse_result = parse_artifact(
+        raw_content=content,
+        artifact_type=artifact_type,
+    )
 
+    # Store artifact with parsed output
     artifact = db.create_artifact(
         engagement_id=engagement_id,
         artifact_type=artifact_type,
         raw_content=content,
-        parsed_content=parsed_content,
-        summary=summary,
+        parsed_content=parse_result['parsed_content'],
+        summary=parse_result['summary'],
         filename=None,
     )
+
+    # Auto-save extracted IoCs
+    for ioc in parse_result.get('iocs', []):
+        try:
+            db.create_ioc(
+                engagement_id=engagement_id,
+                ioc_type=ioc['ioc_type'],
+                value=ioc['value'],
+                context=ioc.get('context'),
+                source_artifact_id=artifact['id'],
+            )
+        except Exception:
+            pass  # Skip duplicates or invalid IoCs silently
+
+    # Auto-save timeline events
+    for event in parse_result.get('timeline_events', []):
+        try:
+            db.create_timeline_event(
+                engagement_id=engagement_id,
+                event_time=event['event_time'],
+                event_type=event['event_type'],
+                description=event['description'],
+                host=event.get('host'),
+                actor=event.get('actor'),
+                process=event.get('process'),
+                source_artifact_id=artifact['id'],
+            )
+        except Exception:
+            pass
+
     return artifact
 
 
@@ -134,61 +136,70 @@ async def upload_artifact(
     """
     Upload an artifact file.
 
-    Accepts any file type. The parser registry routes it to the
-    correct parser based on extension and content sniffing.
-
-    Current parser support (Epic 5):
-      .evtx  → evtx_parser.py
-      .json  → chainsaw_parser.py (if Chainsaw format detected)
-      .csv   → siem_parser.py / edr_parser.py
-      .yml   → sigma_parser.py
-      .txt   → paste_parser.py (best-effort)
-
-    File size limit: 50MB. Large files are parsed and summarized —
-    the raw content is stored but only the summary hits LLM context.
+    Runs through the parser registry which detects type from
+    filename and content, then auto-saves IoCs and timeline events.
     """
     engagement = db.get_engagement(engagement_id)
     if engagement is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Engagement {engagement_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Engagement {engagement_id} not found")
 
-    # Read file content
     raw_bytes = await file.read()
 
     if len(raw_bytes) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large. Maximum size is 50MB."
-        )
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 50MB.")
 
-    # Decode to string — most artifact types are text-based
-    # Binary files (raw EVTX) need special handling in the parser
+    # Decode to string for text-based formats
+    # Binary formats (EVTX) are passed as bytes to the parser
     try:
         raw_content = raw_bytes.decode("utf-8")
     except UnicodeDecodeError:
-        # Binary file — store as placeholder, parser handles it
         raw_content = f"[BINARY FILE: {file.filename}, {len(raw_bytes)} bytes]"
 
-    # Parser registry will be wired here in Epic 5
-    parsed_content = json.dumps({
-        "raw": raw_content[:1000],  # Preview only for binary
-        "parsed": False,
-        "filename": file.filename,
-    })
-    summary = (
-        f"Uploaded file: {file.filename} "
-        f"({len(raw_bytes)} bytes, type: {artifact_type}). "
-        f"Parser pending."
+    # Parse through registry — pass raw_bytes for EVTX support
+    parse_result = parse_artifact(
+        raw_content=raw_content,
+        artifact_type=artifact_type,
+        filename=file.filename,
+        file_bytes=raw_bytes,
     )
 
+    # Store artifact
     artifact = db.create_artifact(
         engagement_id=engagement_id,
         artifact_type=artifact_type,
         raw_content=raw_content,
-        parsed_content=parsed_content,
-        summary=summary,
+        parsed_content=parse_result['parsed_content'],
+        summary=parse_result['summary'],
         filename=file.filename,
     )
+
+    # Auto-save extracted IoCs
+    for ioc in parse_result.get('iocs', []):
+        try:
+            db.create_ioc(
+                engagement_id=engagement_id,
+                ioc_type=ioc['ioc_type'],
+                value=ioc['value'],
+                context=ioc.get('context'),
+                source_artifact_id=artifact['id'],
+            )
+        except Exception:
+            pass
+
+    # Auto-save timeline events
+    for event in parse_result.get('timeline_events', []):
+        try:
+            db.create_timeline_event(
+                engagement_id=engagement_id,
+                event_time=event['event_time'],
+                event_type=event['event_type'],
+                description=event['description'],
+                host=event.get('host'),
+                actor=event.get('actor'),
+                process=event.get('process'),
+                source_artifact_id=artifact['id'],
+            )
+        except Exception:
+            pass
+
     return artifact
