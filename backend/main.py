@@ -7,11 +7,6 @@ This file:
   3. Registers route modules as they are built
   4. Provides the /health endpoint
   5. Initializes the database on startup
-
-Build strategy:
-  We wire routes one at a time as each service is built.
-  Right now: health only.
-  Each future Epic will add one import + one app.include_router() line.
 """
 
 from fastapi import FastAPI
@@ -123,19 +118,6 @@ async def health_check():
         version="0.1.0",
         db_path=str(DB_PATH),
     )
-
-
-# ---------------------------------------------------------------------------
-# ROUTES — wired one at a time as each feature is built
-#
-# Pattern for adding a new route:
-#   from routes.engagements import router as engagements_router
-#   app.include_router(engagements_router, prefix="/api")
-#
-# Current:  health only
-# Next:     engagements router (E7-02)
-# ---------------------------------------------------------------------------
-
 
 # ---------------------------------------------------------------------------
 # Entry point — run with: python main.py
